@@ -1,9 +1,9 @@
 import os
 
-from commander import Comander, Response
+from commander import Commander, Response
 
 
-class MockCommander(Comander):
+class MockCommander(Commander):
     def __init__(self, return_code: int, std_out_source: str, std_err_source: str):
         super().__init__()
         self.std_out_source = std_out_source

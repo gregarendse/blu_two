@@ -1,7 +1,7 @@
 from commander import Response
 
 
-class Comander():
+class Commander():
     def __init__(self):
         pass
 

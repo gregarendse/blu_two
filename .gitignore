@@ -99,3 +99,12 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Ignore test source files
+std_out
+std_err
+return_code
+*.mkv
+
+# Ignore IDEA files
+.idea
