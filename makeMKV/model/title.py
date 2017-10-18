@@ -1,26 +1,54 @@
+from typing import List
+
+from makeMKV.model import Stream
+
+
 class Title(object):
+    id: int
     name: str
     chapters: int
     duration: int
     bytes: int
-    fname: str
+    source_file_name: str
+    segments_count: int
+    segments_map: int
+    output_file_name: str
+    metadata_language_code: str
+    metadata_language_name: str
+    tree_info: str
+    panel_title: str
+    order_weight: int
 
-    def __init__(self):
-        pass
+    streams: List[Stream]
 
-    TINFO:0,2,0,"Friends Season 10 Disc 1"
-TINFO:0,8,0,"4"
-TINFO:0,9,0,"0:22:56"
-TINFO:0,10,0,"2.9 GB"
-TINFO:0,11,0,"3130791936"
-TINFO:0,16,0,"00080.mpls"
-TINFO:0,25,0,"1"
-TINFO:0,26,0,"71"
-TINFO:0,27,0,"Friends_Season_10_Disc_1_t00.mkv"
-TINFO:0,28,0,"eng"
-TINFO:0,29,0,"English"
-TINFO:0,30,0,"Friends Season 10 Disc 1 - 4 chapter(s) , 2.9 GB"
-TINFO:0,31,6120,"<b>Title information</b><br>"
-TINFO:0,33,0,"0"
+    def __init__(self,
+                 id=None,
+                 name=None,
+                 chapters=None,
+                 duration=None,
+                 bytes=None,
+                 source_file_name=None,
+                 segments_count=None,
+                 segments_map=None,
+                 output_file_name=None,
+                 metadata_language_code=None,
+                 metadata_language_name=None,
+                 tree_info=None,
+                 panel_title=None,
+                 order_weight=None):
+        self.id = id
+        self.name = name
+        self.chapters = chapters
+        self.duration = duration
+        self.bytes = bytes
+        self.source_file_name = source_file_name
+        self.segments_count = segments_count
+        self.segments_map = segments_map
+        self.output_file_name = output_file_name
+        self.metadata_language_code = metadata_language_code
+        self.metadata_language_name = metadata_language_name
+        self.tree_info = tree_info
+        self.panel_title = panel_title
+        self.order_weight = order_weight
 
-
+        self.streams = []
