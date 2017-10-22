@@ -35,7 +35,7 @@ class TestModel(unittest.TestCase):
         self.assertEquals("meta_data_language_code", stream.meta_data_language_code)
         self.assertEquals("meta_data_language_name", stream.meta_data_language_name)
         self.assertEquals("tree_info", stream.tree_info)
-        self.assertEquals("panel_info", stream.panel_info)
+        self.assertEquals("panel_info", stream.panel_title)
         self.assertEquals(50, stream.order_weight)
         self.assertEquals(10, stream.mkv_flags)
         self.assertEquals("mkv_flags_text", stream.mkv_flags_text)

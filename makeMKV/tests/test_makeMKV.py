@@ -5,9 +5,11 @@ from commander import MockCommander
 from makeMKV import MakeMKV
 from makeMKV.model import Drive
 from makeMKV.model.disc import Disc
-from makeMKV.model.enum import DriveState, DiskMediaFlag
+from makeMKV.model.enum import DriveState, DiskMediaFlag, StreamFlags
 from makeMKV.model.enum.disc_type import DiscType
 from makeMKV.model.enum.item_info import ItemInfo
+from makeMKV.model.enum.stream_type import StreamType
+from makeMKV.model.stream import VideoStream, AudioStream, SubtitleStream
 from makeMKV.model.title import Title
 
 
@@ -65,18 +67,67 @@ class TestMakeMKV(unittest.TestCase):
         self.assertEqual(ItemInfo.TITLE, title.panel_title)
         self.assertEqual(0, title.order_weight)
 
-# SINFO:0,0,1,6201,"Video"
-# SINFO:0,0,5,0,"V_MPEG4/ISO/AVC"
-# SINFO:0,0,6,0,"Mpeg4"
-# SINFO:0,0,7,0,"Mpeg4"
-# SINFO:0,0,19,0,"1920x1080"
-# SINFO:0,0,20,0,"16:9"
-# SINFO:0,0,21,0,"23.976 (24000/1001)"
-# SINFO:0,0,22,0,"0"
-# SINFO:0,0,28,0,"eng"
-# SINFO:0,0,29,0,"English"
-# SINFO:0,0,30,0,"Mpeg4"
-# SINFO:0,0,31,6121,"<b>Track information</b><br>"
-# SINFO:0,0,33,0,"0"
-# SINFO:0,0,38,0,""
-# SINFO:0,0,42,5088,"( Lossless conversion )"
+        self.assertGreater(len(title.streams), 0)
+
+        video: VideoStream = title.streams[0]
+
+        self.assertEqual(StreamType.VIDEO, video.type)
+        self.assertEqual('V_MPEG4/ISO/AVC', video.codec_id)
+        self.assertEqual('Mpeg4', video.codec_short)
+        self.assertEqual('Mpeg4', video.codec_long)
+        self.assertEqual(StreamFlags(), video.stream_flags)
+        self.assertEqual('eng', video.meta_data_language_code)
+        self.assertEqual('English', video.meta_data_language_name)
+        self.assertEqual('Mpeg4', video.tree_info)
+        self.assertEqual(ItemInfo.TRACK, video.panel_title)
+        self.assertEqual(0, video.order_weight)
+        self.assertEqual(None, video.mkv_flags)
+        self.assertEqual(None, video.mkv_flags_text)
+        self.assertEqual('( Lossless conversion )', video.output_conversion_type)
+        self.assertEqual(1920, video.video_size.x)
+        self.assertEqual(1080, video.video_size.y)
+        self.assertEqual(16, video.aspect_ratio.x)
+        self.assertEqual(9, video.aspect_ratio.y)
+        self.assertEqual(23.976, video.frame_rate)
+
+        audio: AudioStream = title.streams[1]
+
+        self.assertEqual(StreamType.AUDIO, audio.type)
+        self.assertEqual('Surround 5.1', audio.name)
+        self.assertEqual('eng', audio.meta_data_language_code)
+        self.assertEqual('English', audio.meta_data_language_name)
+        self.assertEqual('A_AC3', audio.codec_id)
+        self.assertEqual('DD', audio.codec_short)
+        self.assertEqual('Dolby Digital', audio.codec_long)
+        self.assertEqual(640, audio.bit_rate)
+        self.assertEqual(6, audio.audio_channel_count)
+        self.assertEqual(48000, audio.audio_sample_rate)
+        self.assertEqual(StreamFlags(), audio.stream_flags)
+        self.assertEqual('eng', audio.language_code)
+        self.assertEqual('English', audio.language_name)
+        self.assertEqual('DD Surround 5.1 English', audio.tree_info)
+        self.assertEqual(ItemInfo.TRACK, audio.panel_title)
+        self.assertEqual(90, audio.order_weight)
+        self.assertEqual('d', audio.mkv_flags)
+        self.assertEqual('Default', audio.mkv_flags_text)
+        self.assertEqual('5.1(side)', audio.audio_channel_layout_name)
+        self.assertEqual('( Lossless conversion )', audio.output_conversion_type)
+
+        subtitle: SubtitleStream = title.streams[6]
+
+        self.assertEqual(StreamType.SUBTITLES, subtitle.type)
+        self.assertEqual('S_HDMV/PGS', subtitle.codec_id)
+        self.assertEqual('PGS', subtitle.codec_short)
+        self.assertEqual('HDMV PGS Subtitles', subtitle.codec_long)
+        self.assertEqual(StreamFlags(), subtitle.stream_flags)
+        self.assertEqual('eng', subtitle.meta_data_language_code)
+        self.assertEqual('English', subtitle.meta_data_language_name)
+        self.assertEqual('PGS English', subtitle.tree_info)
+        self.assertEqual(ItemInfo.TRACK, subtitle.panel_title)
+        self.assertEqual(90, subtitle.order_weight)
+        self.assertEqual(None, subtitle.mkv_flags)
+        self.assertEqual(None, subtitle.mkv_flags_text)
+        self.assertEqual('( Lossless conversion )', subtitle.output_conversion_type)
+        self.assertEqual('eng', subtitle.language_code)
+        self.assertEqual('English', subtitle.language_name)
+

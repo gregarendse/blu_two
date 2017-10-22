@@ -2,9 +2,10 @@ from enum import Enum
 
 
 class StreamType(Enum):
-    VIDEO = 0
-    AUDIO = 1
-    SUBTITLES = 3
+    TITLE = 6200
+    VIDEO = 6201
+    AUDIO = 6202
+    SUBTITLES = 6203
 
     def of(input: str):
         if input.upper() == 'VIDEO':

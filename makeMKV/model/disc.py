@@ -36,7 +36,7 @@ class Disc(object):
         self.order_weight = order_weight
         self.titles = {}
 
-    def setAttribute(self, input: str) -> None:
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
         CINFO:1,6209,"Blu-ray disc"
 
@@ -44,63 +44,62 @@ class Disc(object):
         :return:
         """
 
-        parts: List[str] = str(input).split(',')
-
-        if len(parts) < 3:
-            raise Exception('Expected at least 3 parts to line')
-
-        itemAttribute: ItemAttributeId = ItemAttributeId(int(parts[0]))
-        code: int = int(parts[1])
-        value: str = str(parts[2]).strip('\"')
-
-        if ItemAttributeId.Type == itemAttribute:
+        if ItemAttributeId.Type == attributeId:
             self.type = DiscType(code)
-        elif ItemAttributeId.Name == itemAttribute:
+        elif ItemAttributeId.Name == attributeId:
             self.name = value
-        elif ItemAttributeId.MetadataLanguageCode == itemAttribute:
+        elif ItemAttributeId.MetadataLanguageCode == attributeId:
             self.meta_language_code = value
-        elif ItemAttributeId.MetadataLanguageName == itemAttribute:
+        elif ItemAttributeId.MetadataLanguageName == attributeId:
             self.meta_language_name = value
-        elif ItemAttributeId.TreeInfo == itemAttribute:
+        elif ItemAttributeId.TreeInfo == attributeId:
             self.tree_info = value
-        elif ItemAttributeId.PanelTitle == itemAttribute:
+        elif ItemAttributeId.PanelTitle == attributeId:
             self.panel_title = ItemInfo(code)
-        elif ItemAttributeId.VolumeName == itemAttribute:
+        elif ItemAttributeId.VolumeName == attributeId:
             self.volume_name = value
-        elif ItemAttributeId.OrderWeight == itemAttribute:
+        elif ItemAttributeId.OrderWeight == attributeId:
             self.order_weight = int(value)
         else:
             raise Exception(
-                'Unknown Item Attribute Id: {itemAttributeId}, input: {input}'
-                    .format(itemAttributeId=itemAttribute, input=input))
+                'Unknown Item Attribute Id: {itemAttributeId}, code: {code}, input: {input}'
+                    .format(itemAttributeId=attributeId, code=code, input=input))
 
-    def setTitleAttribute(self, input: str) -> None:
+    def setTitleAttribute(self, titleId: int, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
-        TINFO:0,2,0,"Friends Season 10 Disc 1"
-        TINFO:0,8,0,"4"
-        TINFO:0,9,0,"0:22:56"
-        TINFO:0,10,0,"2.9 GB"
-        TINFO:0,11,0,"3130791936"
+
         TINFO:0,16,0,"00080.mpls"
-        TINFO:0,25,0,"1"
-        TINFO:0,26,0,"71"
-        TINFO:0,27,0,"Friends_Season_10_Disc_1_t00.mkv"
-        TINFO:0,28,0,"eng"
-        TINFO:0,29,0,"English"
-        TINFO:0,30,0,"Friends Season 10 Disc 1 - 4 chapter(s) , 2.9 GB"
-        TINFO:0,31,6120,"<b>Title information</b><br>"
-        TINFO:0,33,0,"0"
+
 
         :param input:
         :return:
         """
-        parts: List[str] = str(input).split(',', maxsplit=3)
-        title_index: int = int(parts[0])
-        attribute_id: ItemAttributeId = ItemAttributeId(int(parts[1]))
-        code: int = int(parts[2])
-        value: str = str(parts[3]).strip('\"')
+        # parts: List[str] = str(input).split(',', maxsplit=3)
+        # title_index: int = int(parts[0])
+        # attribute_id: ItemAttributeId = ItemAttributeId(int(parts[1]))
+        # code: int = int(parts[2])
+        # value: str = str(parts[3]).strip('\"')
 
-        if self.titles.get(title_index) == None:
-            self.titles[title_index] = Title(title_index)
+        if self.titles.get(titleId) == None:
+            self.titles[titleId] = Title(titleId)
 
-        self.titles.get(title_index).setAttribute(attributeId=attribute_id, code=code, value=value)
+        self.titles.get(titleId).setAttribute(attributeId=attributeId, code=code, value=value)
+
+    def setStreamAttribute(self, titleId: int, streamId: int, attributeId: ItemAttributeId, code: int,
+                           value: str) -> None:
+        """
+
+        SINFO:0,0,1,6201,"Video"
+
+        :param titleId:
+        :param streamId:
+        :param code:
+        :param value:
+        :return:
+        """
+
+        if self.titles.get(titleId) == None:
+            raise Exception('No title for stream: {titleId}, Stream Id: {streamId}, Code: {code}, Value: {value}'
+                            .format(titleId=titleId, streamId=streamId, code=code, value=value))
+        else:
+            self.titles.get(titleId).setStreamAttribute(streamId, attributeId, code, value)

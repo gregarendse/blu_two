@@ -4,7 +4,7 @@ from typing import List
 from commander import Commander, Response
 from makeMKV.model import Drive
 from makeMKV.model.disc import Disc
-from makeMKV.model.enum import DriveState, DiskMediaFlag
+from makeMKV.model.enum import DriveState, DiskMediaFlag, ItemAttributeId
 
 
 class Type(Enum):
@@ -120,6 +120,7 @@ class MakeMKV(object):
 
             (type, values) = line.split(':', maxsplit=1)
             line_type: Type = Type(fromString(type))
+            parts: List[str] = values.split(',', maxsplit=2)
 
             if Type.MSG == line_type:
                 pass
@@ -134,11 +135,28 @@ class MakeMKV(object):
             elif Type.TCOUNT == line_type:
                 pass
             elif Type.CINFO == line_type:
-                disc.setAttribute(values)
+                disc.setAttribute(
+                    attributeId=ItemAttributeId(int(parts[0])),
+                    code=int(parts[1]),
+                    value=str(parts[2]).strip('\"')
+                )
             elif Type.TINFO == line_type:
-                disc.setTitleAttribute(values)
+                sub_parts: List[str] = str(parts[2]).split(',', maxsplit=1)
+                disc.setTitleAttribute(
+                    titleId=int(parts[0]),
+                    attributeId=ItemAttributeId(int(parts[1])),
+                    code=int(sub_parts[0]),
+                    value=str(sub_parts[1]).strip('\"')
+                )
             elif Type.SINFO == line_type:
-                pass
+                sub_parts: List[str] = str(parts[2]).split(',', maxsplit=2)
+                disc.setStreamAttribute(
+                    titleId=int(parts[0]),
+                    streamId=int(parts[1]),
+                    attributeId=ItemAttributeId(int(sub_parts[0])),
+                    code=int(sub_parts[1]),
+                    value=str(sub_parts[2]).strip('\"')
+                )
             else:
                 raise Exception('How did we get here?')
 

@@ -1,8 +1,10 @@
-from typing import List
+from typing import Dict
 
 from makeMKV.model import Stream
 from makeMKV.model.enum import ItemAttributeId
 from makeMKV.model.enum.item_info import ItemInfo
+from makeMKV.model.enum.stream_type import StreamType
+from makeMKV.model.stream import VideoStream, AudioStream, SubtitleStream
 
 
 class Title(object):
@@ -21,7 +23,7 @@ class Title(object):
     panel_title: ItemInfo
     order_weight: int
 
-    streams: List[Stream]
+    streams: Dict[int, Stream]
 
     def __init__(self,
                  id: int,
@@ -53,7 +55,7 @@ class Title(object):
         self.panel_title = panel_title
         self.order_weight = order_weight
 
-        self.streams = []
+        self.streams = {}
 
     def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
@@ -107,3 +109,48 @@ class Title(object):
         else:
             raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
                             .format(attributeId=attributeId, code=code, value=value))
+
+    def setStreamAttribute(self, streamId: int, attributeId: ItemAttributeId, code: int, value: str) -> None:
+        """
+SINFO:0,0,1,6201,"Video"
+SINFO:0,0,5,0,"V_MPEG4/ISO/AVC"
+SINFO:0,0,6,0,"Mpeg4"
+SINFO:0,0,7,0,"Mpeg4"
+SINFO:0,0,19,0,"1920x1080"
+SINFO:0,0,20,0,"16:9"
+SINFO:0,0,21,0,"23.976 (24000/1001)"
+SINFO:0,0,22,0,"0"
+SINFO:0,0,28,0,"eng"
+SINFO:0,0,29,0,"English"
+SINFO:0,0,30,0,"Mpeg4"
+SINFO:0,0,31,6121,"<b>Track information</b><br>"
+SINFO:0,0,33,0,"0"
+SINFO:0,0,38,0,""
+SINFO:0,0,42,5088,"( Lossless conversion )"
+
+        :param streamId:
+        :param attributeId:
+        :param code:
+        :param value:
+        :return:
+        """
+
+        if self.streams.get(streamId) == None:
+            if ItemAttributeId.Type != attributeId:
+                raise Exception(
+                    'Unknown Stream Type: {streamId}, AttributeId: {attributeId}, Code: {code}, Value: {value}'
+                        .format(streamId=streamId, attributeId=attributeId, code=code, value=value))
+            else:
+                stream_type: StreamType = StreamType(int(code))
+                if StreamType.VIDEO == stream_type:
+                    self.streams[streamId] = VideoStream()
+                elif StreamType.AUDIO == stream_type:
+                    self.streams[streamId] = AudioStream()
+                elif StreamType.SUBTITLES == stream_type:
+                    self.streams[streamId] = SubtitleStream()
+                else:
+                    raise Exception(
+                        'Unknown Stream Type: {streamId}, AttributeId: {attributeId}, Code: {code}, Value: {value}'
+                            .format(streamId=streamId, attributeId=attributeId, code=code, value=value))
+        else:
+            self.streams.get(streamId).setAttribute(attributeId, code, value)

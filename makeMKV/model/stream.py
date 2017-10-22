@@ -1,5 +1,6 @@
 from makeMKV.model.aspect_ratio import AspectRatio
 from makeMKV.model.enum import StreamFlags, ItemAttributeId
+from makeMKV.model.enum.item_info import ItemInfo
 from makeMKV.model.enum.stream_type import StreamType
 from makeMKV.model.resolution import Resolution
 
@@ -13,10 +14,11 @@ class Stream(object):
     meta_data_language_code: str
     meta_data_language_name: str
     tree_info: str
-    panel_info: str
+    panel_title: ItemInfo
     order_weight: int
     mkv_flags: int
     mkv_flags_text: str
+    output_conversion_type: str
 
     def __init__(self,
                  type: StreamType = None,
@@ -27,10 +29,12 @@ class Stream(object):
                  mata_data_language_code: str = None,
                  meta_data_language_name: str = None,
                  tree_info: str = None,
-                 panel_info: str = None,
+                 panel_title: ItemInfo = None,
                  order_weight: int = None,
                  mkv_flags: int = None,
-                 mkv_flags_text: str = None):
+                 mkv_flags_text: str = None,
+                 output_conversion_type: str = None):
+        self.output_conversion_type: str = output_conversion_type
         self.type = type
         self.codec_id = codec_id
         self.codec_short = codec_short
@@ -39,13 +43,13 @@ class Stream(object):
         self.meta_data_language_code = mata_data_language_code
         self.meta_data_language_name = meta_data_language_name
         self.tree_info = tree_info
-        self.panel_info = panel_info
+        self.panel_title = panel_title
         self.order_weight = order_weight
         self.mkv_flags = mkv_flags
         self.mkv_flags_text = mkv_flags_text
+        self.output_conversion_type = output_conversion_type
 
-    def setAttribute(self, attributeId: ItemAttributeId, value: str):
-        value = str(value).strip(' \"\'')
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         if ItemAttributeId.Type == attributeId:
             self.type = StreamType.of(str(value).upper())
         elif ItemAttributeId.CodecId == attributeId:
@@ -55,7 +59,7 @@ class Stream(object):
         elif ItemAttributeId.CodecLong == attributeId:
             self.codec_long = value
         elif ItemAttributeId.StreamFlags == attributeId:
-            self.stream_flags = StreamFlags(value)
+            self.stream_flags = StreamFlags(int(value))
         elif ItemAttributeId.MetadataLanguageCode == attributeId:
             self.meta_data_language_code = value
         elif ItemAttributeId.MetadataLanguageName == attributeId:
@@ -63,15 +67,19 @@ class Stream(object):
         elif ItemAttributeId.TreeInfo == attributeId:
             self.tree_info = value
         elif ItemAttributeId.PanelTitle == attributeId:
-            self.panel_info = value
+            self.panel_title = ItemInfo(int(code))
         elif ItemAttributeId.OrderWeight == attributeId:
             self.order_weight = int(value)
         elif ItemAttributeId.MkvFlags == attributeId:
-            self.mkv_flags = int(value)
+            if len(value) > 0:
+                self.mkv_flags = value
         elif ItemAttributeId.MkvFlagsText == attributeId:
             self.mkv_flags_text = value
+        elif ItemAttributeId.OutputConversionType == attributeId:
+            self.output_conversion_type = value
         else:
-            raise Exception("Invalid Attribute Id: " + str(attributeId))
+            raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
+                            .format(attributeId=attributeId, code=code, value=value))
 
 
 class VideoStream(Stream):
@@ -79,17 +87,19 @@ class VideoStream(Stream):
     aspect_ratio: AspectRatio
     frame_rate: float
 
-    def __init__(self, codec_id: str = None,
+    def __init__(self,
+                 codec_id: str = None,
                  codec_short: str = None,
                  codec_long: str = None,
                  stream_flags: StreamFlags = None,
                  mata_data_language_code: str = None,
                  meta_data_language_name: str = None,
                  tree_info: str = None,
-                 panel_info: str = None,
+                 panel_title: str = None,
                  order_weight: int = None,
                  mkv_flags: int = None,
                  mkv_flags_text: str = None,
+                 output_conversion_type: str = None,
                  video_size: Resolution = None,
                  aspect_ratio: AspectRatio = None,
                  frame_rate: float = None):
@@ -101,26 +111,28 @@ class VideoStream(Stream):
                          mata_data_language_code=mata_data_language_code,
                          meta_data_language_name=meta_data_language_name,
                          tree_info=tree_info,
-                         panel_info=panel_info,
+                         panel_title=panel_title,
                          order_weight=order_weight,
                          mkv_flags=mkv_flags,
-                         mkv_flags_text=mkv_flags_text)
+                         mkv_flags_text=mkv_flags_text,
+                         output_conversion_type=output_conversion_type)
         self.video_size = video_size
         self.aspect_ratio = aspect_ratio
         self.frame_rate = frame_rate
 
-    def setAttribute(self, attributeId: ItemAttributeId, value: str):
-        value = str(value).strip(' \'\"')
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         if ItemAttributeId.VideoSize == attributeId:
-            parts = value.split('x')
+            parts = str(value).split('x', maxsplit=1)
             self.video_size = Resolution(int(parts[0]), int(parts[1]))
-        elif ItemAttributeId.VideoAspectRatio == ItemAttributeId:
-            parts = value.split(':')
+        elif ItemAttributeId.VideoAspectRatio == attributeId:
+            parts = str(value).split(':', maxsplit=1)
             self.aspect_ratio = AspectRatio(int(parts[0]), int(parts[1]))
         elif ItemAttributeId.VideoFrameRate == attributeId:
-            self.frame_rate = float(value)
+            self.frame_rate = float(
+                str(value).split(' ')[0]
+            )
         else:
-            super().setAttribute(attributeId, value)
+            super().setAttribute(attributeId, code, value)
 
 
 class AudioStream(Stream):
@@ -132,7 +144,6 @@ class AudioStream(Stream):
     audio_sample_rate: int
     volume_name: str
     audio_channel_layout_name: str
-    output_conversion_type: str
 
     def __init__(self,
                  codec_id: str = None,
@@ -142,7 +153,7 @@ class AudioStream(Stream):
                  mata_data_language_code: str = None,
                  meta_data_language_name: str = None,
                  tree_info: str = None,
-                 panel_info: str = None,
+                 panel_title: str = None,
                  order_weight: int = None,
                  mkv_flags: int = None,
                  mkv_flags_text: str = None,
@@ -163,10 +174,11 @@ class AudioStream(Stream):
                          mata_data_language_code=mata_data_language_code,
                          meta_data_language_name=meta_data_language_name,
                          tree_info=tree_info,
-                         panel_info=panel_info,
+                         panel_title=panel_title,
                          order_weight=order_weight,
                          mkv_flags=mkv_flags,
-                         mkv_flags_text=mkv_flags_text)
+                         mkv_flags_text=mkv_flags_text,
+                         output_conversion_type=output_conversion_type)
         self.name: str = name
         self.language_code: str = language_code
         self.language_name: str = language_name
@@ -175,9 +187,8 @@ class AudioStream(Stream):
         self.audio_sample_rate: int = audio_sample_rate
         self.volume_name: str = volume_name
         self.audio_channel_layout_name: str = audio_channel_layout_name
-        self.output_conversion_type: str = output_conversion_type
 
-    def setAttribute(self, attributeId: ItemAttributeId, value: str):
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         if ItemAttributeId.Name == attributeId:
             self.name = value
         elif ItemAttributeId.LangCode == attributeId:
@@ -185,7 +196,7 @@ class AudioStream(Stream):
         elif ItemAttributeId.LangName == attributeId:
             self.language_name = value
         elif ItemAttributeId.BitRate == attributeId:
-            self.bit_rate = int(value)
+            self.bit_rate = int(value.split(' ')[0])
         elif ItemAttributeId.AudioChannelsCount == attributeId:
             self.audio_channel_count = int(value)
         elif ItemAttributeId.AudioSampleRate == attributeId:
@@ -194,10 +205,8 @@ class AudioStream(Stream):
             self.volume_name = value
         elif ItemAttributeId.AudioChannelLayoutName == attributeId:
             self.audio_channel_layout_name = value
-        elif ItemAttributeId.OutputConversionType == attributeId:
-            self.output_conversion_type = value
         else:
-            super().setAttribute(attributeId, value)
+            super().setAttribute(attributeId, code, value)
 
 
 class SubtitleStream(Stream):
@@ -212,10 +221,11 @@ class SubtitleStream(Stream):
                  mata_data_language_code: str = None,
                  meta_data_language_name: str = None,
                  tree_info: str = None,
-                 panel_info: str = None,
+                 panel_title: str = None,
                  order_weight: int = None,
                  mkv_flags: int = None,
                  mkv_flags_text: str = None,
+                 output_conversion_type: str = None,
                  language_code: str = None,
                  language_name: str = None):
         super().__init__(StreamType.SUBTITLES,
@@ -226,17 +236,18 @@ class SubtitleStream(Stream):
                          mata_data_language_code=mata_data_language_code,
                          meta_data_language_name=meta_data_language_name,
                          tree_info=tree_info,
-                         panel_info=panel_info,
+                         panel_title=panel_title,
                          order_weight=order_weight,
                          mkv_flags=mkv_flags,
-                         mkv_flags_text=mkv_flags_text)
+                         mkv_flags_text=mkv_flags_text,
+                         output_conversion_type=output_conversion_type)
         self.language_code: str = language_code
         self.language_name: str = language_name
 
-    def setAttribute(self, attributeId: ItemAttributeId, value: str):
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         if ItemAttributeId.LangCode == attributeId:
             self.language_code = value
         elif ItemAttributeId.LangName == attributeId:
             self.language_name = value
         else:
-            super().setAttribute(attributeId, value)
+            super().setAttribute(attributeId, code, value)
