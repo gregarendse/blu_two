@@ -1,6 +1,8 @@
 from typing import List
 
 from makeMKV.model import Stream
+from makeMKV.model.enum import ItemAttributeId
+from makeMKV.model.enum.item_info import ItemInfo
 
 
 class Title(object):
@@ -16,13 +18,13 @@ class Title(object):
     metadata_language_code: str
     metadata_language_name: str
     tree_info: str
-    panel_title: str
+    panel_title: ItemInfo
     order_weight: int
 
     streams: List[Stream]
 
     def __init__(self,
-                 id=None,
+                 id: int,
                  name=None,
                  chapters=None,
                  duration=None,
@@ -52,3 +54,56 @@ class Title(object):
         self.order_weight = order_weight
 
         self.streams = []
+
+    def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
+        """
+        TINFO:0,2,0,"Friends Season 10 Disc 1"
+        TINFO:0,8,0,"4"
+        TINFO:0,9,0,"0:22:56"
+        TINFO:0,10,0,"2.9 GB"
+        TINFO:0,11,0,"3130791936"
+        TINFO:0,16,0,"00080.mpls"
+        TINFO:0,25,0,"1"
+        TINFO:0,26,0,"71"
+        TINFO:0,27,0,"Friends_Season_10_Disc_1_t00.mkv"
+        TINFO:0,28,0,"eng"
+        TINFO:0,29,0,"English"
+        TINFO:0,30,0,"Friends Season 10 Disc 1 - 4 chapter(s) , 2.9 GB"
+        TINFO:0,31,6120,"<b>Title information</b><br>"
+        TINFO:0,33,0,"0"
+        :param input:
+        :return:
+        """
+
+        if ItemAttributeId.Name == attributeId:
+            self.name = str(value)
+        elif ItemAttributeId.ChapterCount == attributeId:
+            self.chapters = int(value)
+        elif ItemAttributeId.Duration == attributeId:
+            (hrs, min, sec) = str(value).split(':', 3)
+            self.duration = (int(hrs) * 3600) + (int(min) * 60) + int(sec)
+        elif ItemAttributeId.DiskSize == attributeId:
+            pass
+        elif ItemAttributeId.DiskSizeBytes == attributeId:
+            self.bytes = int(value)
+        elif ItemAttributeId.SourceFileName == attributeId:
+            self.source_file_name = str(value)
+        elif ItemAttributeId.SegmentsCount == attributeId:
+            self.segments_count = int(value)
+        elif ItemAttributeId.SegmentsMap == attributeId:
+            self.segments_map = int(value)
+        elif ItemAttributeId.OutputFileName == attributeId:
+            self.output_file_name = str(value)
+        elif ItemAttributeId.MetadataLanguageCode == attributeId:
+            self.metadata_language_code = str(value)
+        elif ItemAttributeId.MetadataLanguageName == attributeId:
+            self.metadata_language_name = str(value)
+        elif ItemAttributeId.TreeInfo == attributeId:
+            self.tree_info = str(value)
+        elif ItemAttributeId.PanelTitle == attributeId:
+            self.panel_title = ItemInfo(int(code))
+        elif ItemAttributeId.OrderWeight == attributeId:
+            self.order_weight = int(value)
+        else:
+            raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
+                            .format(attributeId=attributeId, code=code, value=value))

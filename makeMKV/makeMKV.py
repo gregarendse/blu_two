@@ -3,6 +3,8 @@ from typing import List
 
 from commander import Commander, Response
 from makeMKV.model import Drive
+from makeMKV.model.disc import Disc
+from makeMKV.model.enum import DriveState, DiskMediaFlag
 
 
 class Type(Enum):
@@ -42,6 +44,7 @@ def fromString(input: str) -> Type:
 
 class MakeMKV(object):
     def __init__(self, commander: Commander):
+        self.min_length = 900
         self.commander: Commander = commander
         self.executable: str = 'makemkvcon.exe'
 
@@ -51,9 +54,19 @@ class MakeMKV(object):
         if response.return_code != 0:
             raise Exception(response.std_err)
 
-        return self.__parse_make_mkv_output__(response.std_out)
+        return self.__parse_scan_drives_output__(response.std_out)
 
-    def __parse_make_mkv_output__(self, std_out: List[str]) -> List[Drive]:
+    def scan_disc(self, drive: Drive) -> Disc:
+        response: Response = self.commander.call(
+            '{executable} -r info disc:{disc} --minlength={min_length} --noscan'
+                .format(executable=self.executable, disc=drive.index, min_length=self.min_length))
+
+        if response.return_code != 0:
+            raise Exception(response.std_err)
+
+        return self.__parse_scan_disc_output__(response.std_out)
+
+    def __parse_scan_drives_output__(self, std_out: List[str]) -> List[Drive]:
         drives: List[Drive] = []
         for line in std_out:
             if len(line) == 0:
@@ -77,9 +90,8 @@ class MakeMKV(object):
 
                 drive: Drive = Drive(
                     index=int(line_parts[0]),
-                    visible=(int(line_parts[1]) != 256),
-                    enabled=(int(line_parts[2]) == 999),
-                    flags=int(line_parts[3]),
+                    visible=DriveState(int(line_parts[1])),
+                    flags=DiskMediaFlag(int(line_parts[3])),
                     drive_name=line_parts[4].strip('\"'),
                     disc_name=line_parts[5].strip('\"')
                 )
@@ -98,4 +110,36 @@ class MakeMKV(object):
             else:
                 raise Exception('How did we get here?')
 
-        return drives
+        return [drive for drive in drives if drive.visible == DriveState.Inserted]
+
+    def __parse_scan_disc_output__(self, std_out: List[str]) -> Disc:
+        disc: Disc = Disc()
+        for line in std_out:
+            if len(line) == 0:
+                continue
+
+            (type, values) = line.split(':', maxsplit=1)
+            line_type: Type = Type(fromString(type))
+
+            if Type.MSG == line_type:
+                pass
+            elif Type.PRGC == line_type:
+                pass
+            elif Type.PRGT == line_type:
+                pass
+            elif Type.PRGV == line_type:
+                pass
+            elif Type.DRV == line_type:
+                pass
+            elif Type.TCOUNT == line_type:
+                pass
+            elif Type.CINFO == line_type:
+                disc.setAttribute(values)
+            elif Type.TINFO == line_type:
+                disc.setTitleAttribute(values)
+            elif Type.SINFO == line_type:
+                pass
+            else:
+                raise Exception('How did we get here?')
+
+        return disc
