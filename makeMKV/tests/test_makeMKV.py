@@ -2,12 +2,14 @@ import unittest
 from typing import List
 
 from commander import MockCommander
-from makeMKV import MakeMKV
-from makeMKV.model import Drive
+from makeMKV.makeMKV import MakeMKV
 from makeMKV.model.disc import Disc
-from makeMKV.model.enum import DriveState, DiskMediaFlag, StreamFlags
+from makeMKV.model.drive import Drive
 from makeMKV.model.enum.disc_type import DiscType
+from makeMKV.model.enum.disk_media_flag import DiskMediaFlag
+from makeMKV.model.enum.drive_state import DriveState
 from makeMKV.model.enum.item_info import ItemInfo
+from makeMKV.model.enum.stream_flags import StreamFlags
 from makeMKV.model.enum.stream_type import StreamType
 from makeMKV.model.stream import VideoStream, AudioStream, SubtitleStream
 from makeMKV.model.title import Title
@@ -37,7 +39,9 @@ class TestMakeMKV(unittest.TestCase):
 
         drive: Drive = Drive(index=0)
 
-        disc: Disc = makeMKV.scan_disc(drive)
+        makeMKV.scan_disc(drive)
+
+        disc: Disc = drive.disc
 
         self.assertEqual(DiscType.BRAY_TYPE_DISK, disc.type)
         self.assertEqual('Friends Season 10 Disc 1', disc.name)
@@ -50,7 +54,7 @@ class TestMakeMKV(unittest.TestCase):
 
         self.assertGreater(len(disc.titles), 0)
 
-        title: Title = disc.titles[0]
+        title: Title = disc.titles[71]
 
         self.assertEqual(0, title.id)
         self.assertEqual('Friends Season 10 Disc 1', title.name)
@@ -131,3 +135,15 @@ class TestMakeMKV(unittest.TestCase):
         self.assertEqual('eng', subtitle.language_code)
         self.assertEqual('English', subtitle.language_name)
 
+    def test_rip_disc(self):
+        makeMKV: MakeMKV = MakeMKV(
+            MockCommander(0, './rip_title/std_out', './rip_title/std_err')
+        )
+
+        mock_drive: Drive = Drive()
+        mock_drive.disc.titles = {}
+        mock_drive.disc.titles[0] = Title()
+
+        output: str = makeMKV.rip_disc(mock_drive, '', str(0))
+
+        self.assertEqual(None, output)

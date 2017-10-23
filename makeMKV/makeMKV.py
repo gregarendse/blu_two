@@ -1,10 +1,14 @@
+import os
 from enum import Enum
-from typing import List
+from typing import List, Dict, Optional
 
 from commander import Commander, Response
-from makeMKV.model import Drive
 from makeMKV.model.disc import Disc
-from makeMKV.model.enum import DriveState, DiskMediaFlag, ItemAttributeId
+from makeMKV.model.drive import Drive
+from makeMKV.model.enum.disk_media_flag import DiskMediaFlag
+from makeMKV.model.enum.drive_state import DriveState
+from makeMKV.model.enum.item_attribute_id import ItemAttributeId
+from makeMKV.model.title import Title
 
 
 class Type(Enum):
@@ -56,7 +60,21 @@ class MakeMKV(object):
 
         return self.__parse_scan_drives_output__(response.std_out)
 
-    def scan_disc(self, drive: Drive) -> Disc:
+    def rip_disc(self, drive: Drive, destinationFolder: str, titleId: str = 'all') -> Optional[str]:
+        response: Response = self.commander.call(
+            '{executable} -r mkv disc:{discId} {titleId} {destinationFolder} --minlength={minLength} --noscan'
+                .format(executable=self.executable, discId=drive.index, titleId=titleId,
+                        destinationFolder=destinationFolder, minLength=self.min_length))
+
+        if response.return_code != 0:
+            raise Exception(response.std_out)
+
+        if drive.disc.titles.get(titleId) != None:
+            return os.path.join(destinationFolder, drive.disc.titles[titleId])
+        else:
+            return destinationFolder
+
+    def scan_disc(self, drive: Drive) -> Drive:
         response: Response = self.commander.call(
             '{executable} -r info disc:{disc} --minlength={min_length} --noscan'
                 .format(executable=self.executable, disc=drive.index, min_length=self.min_length))
@@ -64,7 +82,9 @@ class MakeMKV(object):
         if response.return_code != 0:
             raise Exception(response.std_err)
 
-        return self.__parse_scan_disc_output__(response.std_out)
+        drive.disc = self.__parse_scan_disc_output__(response.std_out)
+
+        return drive
 
     def __parse_scan_drives_output__(self, std_out: List[str]) -> List[Drive]:
         drives: List[Drive] = []
@@ -159,5 +179,16 @@ class MakeMKV(object):
                 )
             else:
                 raise Exception('How did we get here?')
+
+        return self.__filter_scan_disc_output__(disc)
+
+    def __filter_scan_disc_output__(self, disc: Disc) -> Disc:
+        title_map: Dict[int, Title] = {}
+        for key, value in disc.titles.items():
+            if title_map.get(value.segments_map) == None:
+                title_map[value.segments_map] = value
+            elif title_map.get(value.segments_map).compare(value) < 0:
+                title_map[value.segments_map] = value
+        disc.titles = title_map
 
         return disc

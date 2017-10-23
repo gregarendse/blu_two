@@ -1,6 +1,7 @@
 import unittest
 
-from makeMKV.model.enum import ItemAttributeId, StreamFlags
+from makeMKV.model.enum.item_attribute_id import ItemAttributeId
+from makeMKV.model.enum.stream_flags import StreamFlags
 from makeMKV.model.enum.stream_type import StreamType
 from makeMKV.model.stream import Stream
 

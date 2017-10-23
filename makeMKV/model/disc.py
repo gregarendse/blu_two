@@ -1,7 +1,7 @@
-from typing import List, Dict
+from typing import Dict
 
-from makeMKV.model.enum import ItemAttributeId
 from makeMKV.model.enum.disc_type import DiscType
+from makeMKV.model.enum.item_attribute_id import ItemAttributeId
 from makeMKV.model.enum.item_info import ItemInfo
 from makeMKV.model.title import Title
 
@@ -74,11 +74,6 @@ class Disc(object):
         :param input:
         :return:
         """
-        # parts: List[str] = str(input).split(',', maxsplit=3)
-        # title_index: int = int(parts[0])
-        # attribute_id: ItemAttributeId = ItemAttributeId(int(parts[1]))
-        # code: int = int(parts[2])
-        # value: str = str(parts[3]).strip('\"')
 
         if self.titles.get(titleId) == None:
             self.titles[titleId] = Title(titleId)

@@ -1,6 +1,8 @@
 from typing import Optional
 
-from makeMKV.model.enum import DiskMediaFlag, DriveState
+from makeMKV.model.disc import Disc
+from makeMKV.model.enum.disk_media_flag import DiskMediaFlag
+from makeMKV.model.enum.drive_state import DriveState
 
 
 class Drive(object):
@@ -20,15 +22,18 @@ class Drive(object):
     flags: DiskMediaFlag
     drive_name: Optional[str]
     disc_name: Optional[str]
+    disc: Disc
 
     def __init__(self,
                  index: int = None,
                  visible: DriveState = DriveState.NoDrive,
                  flags: DiskMediaFlag = None,
                  drive_name: Optional[str] = None,
-                 disc_name: Optional[str] = None):
+                 disc_name: Optional[str] = None,
+                 disc: Disc = None):
         self.index = index
         self.visible = visible
         self.flags = flags
         self.drive_name = drive_name
         self.disc_name = disc_name
+        self.disc = disc

@@ -1,10 +1,9 @@
 from typing import Dict
 
-from makeMKV.model import Stream
-from makeMKV.model.enum import ItemAttributeId
+from makeMKV.model.enum.item_attribute_id import ItemAttributeId
 from makeMKV.model.enum.item_info import ItemInfo
 from makeMKV.model.enum.stream_type import StreamType
-from makeMKV.model.stream import VideoStream, AudioStream, SubtitleStream
+from makeMKV.model.stream import Stream, VideoStream, SubtitleStream, AudioStream
 
 
 class Title(object):
@@ -154,3 +153,13 @@ SINFO:0,0,42,5088,"( Lossless conversion )"
                             .format(streamId=streamId, attributeId=attributeId, code=code, value=value))
         else:
             self.streams.get(streamId).setAttribute(attributeId, code, value)
+
+    def compare(self, other) -> int:
+        if type(self) != type(other):
+            raise Exception('Type mismatch, self: {self}, other: {other}'
+                            .format(self=self, other=other))
+        # Assuming the title with the most streams is the title we want
+        if len(self.streams) > len(other.streams):
+            return 1
+        else:
+            return -1

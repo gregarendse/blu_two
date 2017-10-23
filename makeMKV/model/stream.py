@@ -1,6 +1,7 @@
 from makeMKV.model.aspect_ratio import AspectRatio
-from makeMKV.model.enum import StreamFlags, ItemAttributeId
+from makeMKV.model.enum.item_attribute_id import ItemAttributeId
 from makeMKV.model.enum.item_info import ItemInfo
+from makeMKV.model.enum.stream_flags import StreamFlags
 from makeMKV.model.enum.stream_type import StreamType
 from makeMKV.model.resolution import Resolution
 
@@ -80,6 +81,13 @@ class Stream(object):
         else:
             raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
                             .format(attributeId=attributeId, code=code, value=value))
+
+    def compare(self, other) -> int:
+        if type(other) != type(self):
+            raise Exception('Type mismatch, self: {self}, other: {other}'
+                            .format(self=self, other=other))
+
+        return 0
 
 
 class VideoStream(Stream):
