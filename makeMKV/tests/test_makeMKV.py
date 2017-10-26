@@ -141,9 +141,12 @@ class TestMakeMKV(unittest.TestCase):
         )
 
         mock_drive: Drive = Drive()
+        mock_drive.index = 0
+        mock_drive.disc = Disc()
         mock_drive.disc.titles = {}
-        mock_drive.disc.titles[0] = Title()
+        mock_drive.disc.titles[0] = Title(0)
+        mock_drive.disc.titles[0].output_file_name = 'test'
 
-        output: str = makeMKV.rip_disc(mock_drive, '', str(0))
+        output: str = makeMKV.rip_disc(mock_drive, 'dest', 0)
 
-        self.assertEqual(None, output)
+        self.assertEqual('dest\\test', output)

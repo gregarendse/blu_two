@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 from typing import List, Dict, Optional
 
 from commander import Commander, Response
@@ -8,42 +7,8 @@ from makeMKV.model.drive import Drive
 from makeMKV.model.enum.disk_media_flag import DiskMediaFlag
 from makeMKV.model.enum.drive_state import DriveState
 from makeMKV.model.enum.item_attribute_id import ItemAttributeId
+from makeMKV.model.enum.line_type import Type
 from makeMKV.model.title import Title
-
-
-class Type(Enum):
-    MSG = 0  # Message output
-    PRGC = 1  # Current progress title
-    PRGT = 2  # Total progress title
-    PRGV = 3  # Progress bar values for current and total progress
-    DRV = 4  # Drive scan messages
-    TCOUNT = 5  # Disc information - Title count
-    CINFO = 6  # Disc Information
-    TINFO = 7  # Title Information
-    SINFO = 8  # Stream Information
-
-
-def fromString(input: str) -> Type:
-    if input == 'MSG':
-        return Type.MSG
-    elif input == 'PRGC':
-        return Type.PRGC
-    elif input == 'PRGT':
-        return Type.PRGT
-    elif input == 'PRGV':
-        return Type.PRGV
-    elif input == 'DRV':
-        return Type.DRV
-    elif input == 'TCOUNT':
-        return Type.TCOUNT
-    elif input == 'CINFO':
-        return Type.CINFO
-    elif input == 'TINFO':
-        return Type.TINFO
-    elif input == 'SINFO':
-        return Type.SINFO
-    else:
-        raise Exception('Unknown type: ' + input)
 
 
 class MakeMKV(object):
@@ -60,17 +25,21 @@ class MakeMKV(object):
 
         return self.__parse_scan_drives_output__(response.std_out)
 
-    def rip_disc(self, drive: Drive, destinationFolder: str, titleId: str = 'all') -> Optional[str]:
+    def rip_disc(self, drive: Drive, destinationFolder: str, titleId: int = None) -> Optional[str]:
+        titleIdStr: str = 'all'
+        if titleId != None:
+            titleIdStr = str(titleId)
+
         response: Response = self.commander.call(
-            '{executable} -r mkv disc:{discId} {titleId} {destinationFolder} --minlength={minLength} --noscan'
-                .format(executable=self.executable, discId=drive.index, titleId=titleId,
+            '{executable} -r mkv disc:{discId} {titleId} {destinationFolder} --minlength={minLength} --decrypt --directio=true'
+                .format(executable=self.executable, discId=drive.index, titleId=titleIdStr,
                         destinationFolder=destinationFolder, minLength=self.min_length))
 
         if response.return_code != 0:
-            raise Exception(response.std_out)
+            raise Exception(response.std_err)
 
         if drive.disc.titles.get(titleId) != None:
-            return os.path.join(destinationFolder, drive.disc.titles[titleId])
+            return os.path.join(destinationFolder, drive.disc.titles[titleId].output_file_name)
         else:
             return destinationFolder
 
@@ -93,7 +62,7 @@ class MakeMKV(object):
                 continue
 
             (type, values) = line.split(':', maxsplit=1)
-            line_type: Type = Type(fromString(type))
+            line_type: Type = Type.fromString(type)
             line_parts: List[str] = values.split(',')
 
             if Type.MSG == line_type:
@@ -139,7 +108,7 @@ class MakeMKV(object):
                 continue
 
             (type, values) = line.split(':', maxsplit=1)
-            line_type: Type = Type(fromString(type))
+            line_type: Type = Type.fromString(type)
             parts: List[str] = values.split(',', maxsplit=2)
 
             if Type.MSG == line_type:

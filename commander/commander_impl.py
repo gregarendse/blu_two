@@ -9,6 +9,7 @@ class CommanderImpl(Commander):
         super().__init__()
 
     def call(self, cmd: str) -> Response:
+        print(cmd)
         completed = subprocess.run(
             cmd,
             shell=True,

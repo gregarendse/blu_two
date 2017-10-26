@@ -26,9 +26,20 @@ class CLI(object):
                 file.write("{line}\n".format(line=line))
 
     def CaptureMakeMkv(self):
-        self.CaptureProcess('makemkvcon -r info disc:-1', 'scan_drives')
-        self.CaptureProcess('makemkvcon -r info disc:0 --minlength=900 --noscan', 'scan_disc')
-        self.CaptureProcess('makemkvcon -r mkv disc:0 0 ./tests --minlength=900 --noscan', 'rip_title')
+        # self.CaptureProcess('makemkvcon -r info disc:-1', 'scan_drives')
+        # self.CaptureProcess('makemkvcon -r info disc:0 --minlength=900 --noscan', 'scan_disc')
+        # self.CaptureProcess('makemkvcon -r mkv disc:0 0 ./tests --minlength=900 --noscan', 'rip_title')
+        self.CaptureProcess(
+            'HandBrakeCLI.exe --verbose --input="{input}" --output="{output}" --preset="{preset}" --rate={frameRate} --quality={quality} --encoder={encoder} --encoder-preset={encoderPreset} --encoder-tune={encoderTune} {options}'
+                .format(input='F:\\video\\Friends_Season_10_Disc_1_t15.mkv',
+                        output='F:\\video\\Friends_Season_10_Disc_1_t15_compressed.mkv',
+                        preset='High Profile',
+                        frameRate=29.97,
+                        quality=22,
+                        encoder='x264',
+                        encoderPreset='veryslow',
+                        encoderTune='film',
+                        options='--two-pass --turbo '), 'handbrakeCLI')
 
 
 if __name__ == '__main__':
