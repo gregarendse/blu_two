@@ -21,6 +21,7 @@ class Title(object):
     tree_info: str
     panel_title: ItemInfo
     order_weight: int
+    raw_location: str
 
     streams: Dict[int, Stream]
 
@@ -53,8 +54,14 @@ class Title(object):
         self.tree_info = tree_info
         self.panel_title = panel_title
         self.order_weight = order_weight
+        self.raw_location = None
 
         self.streams = {}
+
+        self.name: str = None
+        self.episode: int = None
+        self.season: int = None
+        self.series: str = None
 
     def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
@@ -72,7 +79,6 @@ class Title(object):
         TINFO:0,30,0,"Friends Season 10 Disc 1 - 4 chapter(s) , 2.9 GB"
         TINFO:0,31,6120,"<b>Title information</b><br>"
         TINFO:0,33,0,"0"
-        :param input:
         :return:
         """
 
@@ -163,3 +169,8 @@ SINFO:0,0,42,5088,"( Lossless conversion )"
             return 1
         else:
             return -1
+
+    def getVideoStream(self) -> VideoStream:
+        for key, value in self.streams.items():
+            if type(value) is VideoStream:
+                return value

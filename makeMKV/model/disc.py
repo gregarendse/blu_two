@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Optional
 
 from makeMKV.model.enum.disc_type import DiscType
 from makeMKV.model.enum.item_attribute_id import ItemAttributeId
@@ -16,6 +16,7 @@ class Disc(object):
     volume_name: str
     order_weight: int
     titles: Dict[int, Title]
+    ordered_titles: List[Title]
 
     def __init__(self,
                  type=None,
@@ -35,12 +36,11 @@ class Disc(object):
         self.volume_name = volume_name
         self.order_weight = order_weight
         self.titles = {}
+        self.ordered_titles: List[Title] = []
 
     def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
         CINFO:1,6209,"Blu-ray disc"
-
-        :param input:
         :return:
         """
 
@@ -67,11 +67,8 @@ class Disc(object):
 
     def setTitleAttribute(self, titleId: int, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
-
         TINFO:0,16,0,"00080.mpls"
 
-
-        :param input:
         :return:
         """
 
@@ -98,3 +95,8 @@ class Disc(object):
                             .format(titleId=titleId, streamId=streamId, code=code, value=value))
         else:
             self.titles.get(titleId).setStreamAttribute(streamId, attributeId, code, value)
+
+    def getTitleById(self, id: int) -> Optional[Title]:
+        for key, title in self.titles.items():
+            if title.id == id:
+                return title

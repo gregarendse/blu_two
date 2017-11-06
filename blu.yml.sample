@@ -1,0 +1,26 @@
+general:
+  location:
+    raw: F:\\video
+    compressed: F:\\video
+  filename_format: '{series} - S{season:00}E{episode:00} - {name} {source} {resolution}p'
+
+makemkv:
+  executable: makemkvcon
+  min_length: 900
+
+handbrake:
+  executable: handbrakecli
+  preset: High Profile
+  frame_rate: 29.97
+  quality: 22
+  encoder:
+    encoder: x264
+    preset: veryslow
+    tune: film
+  option: --two-pass --turbo
+
+identifier:
+  theTVDB:
+    api_key:
+    user_key:
+    username:

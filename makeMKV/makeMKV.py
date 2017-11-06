@@ -1,6 +1,7 @@
 import os
 from typing import List, Dict, Optional
 
+from blu import Config
 from commander import Commander, Response
 from makeMKV.model.disc import Disc
 from makeMKV.model.drive import Drive
@@ -12,10 +13,11 @@ from makeMKV.model.title import Title
 
 
 class MakeMKV(object):
+    config: Config = Config()
     def __init__(self, commander: Commander):
-        self.min_length = 900
         self.commander: Commander = commander
-        self.executable: str = 'makemkvcon.exe'
+        self.executable: str = self.config.cfg['makemkv']['executable']
+        self.min_length: int = self.config.cfg['makemkv']['min_length']
 
     def scan_drives(self) -> List[Drive]:
         response: Response = self.commander.call('{executable} -r info disc:-1'.format(executable=self.executable))
@@ -38,8 +40,8 @@ class MakeMKV(object):
         if response.return_code != 0:
             raise Exception(response.std_err)
 
-        if drive.disc.titles.get(titleId) != None:
-            return os.path.join(destinationFolder, drive.disc.titles[titleId].output_file_name)
+        if drive.disc.getTitleById(titleId) != None:
+            return os.path.join(destinationFolder, drive.disc.getTitleById(titleId).output_file_name)
         else:
             return destinationFolder
 
@@ -158,6 +160,17 @@ class MakeMKV(object):
                 title_map[value.segments_map] = value
             elif title_map.get(value.segments_map).compare(value) < 0:
                 title_map[value.segments_map] = value
+
         disc.titles = title_map
+        disc.ordered_titles = []
+
+        i: int = 0
+        while (len(title_map) > len(disc.ordered_titles)):
+            title = title_map.get(i)
+
+            if title is not None:
+                disc.ordered_titles.append(title)
+
+            i += 1
 
         return disc

@@ -39,7 +39,7 @@ class CLI(object):
                         encoder='x264',
                         encoderPreset='veryslow',
                         encoderTune='film',
-                        options='--two-pass --turbo '), 'handbrakeCLI')
+                        options='--two-pass --turbo '), 'compressFile')
 
 
 if __name__ == '__main__':
