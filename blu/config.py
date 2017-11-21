@@ -1,4 +1,8 @@
+import logging
+
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class Config(object):
@@ -11,5 +15,6 @@ class Config(object):
         return Config.__instance__
 
     def load(self, location: str = "blu.yml"):
+        logger.info('loading configuration, source: %s', location)
         with open(location, 'r') as file:
             self.cfg = yaml.load(file)

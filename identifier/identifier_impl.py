@@ -15,7 +15,7 @@ class Identifier(object):
     def __init__(self):
         self.tvdb = TVDB(apikey=self.config.cfg['identifier']['theTVDB']['api_key'],
                          userkey=self.config.cfg['identifier']['theTVDB']['user_key'],
-                         username=self.config.cfg['identifier']['theTVDB']['user_key'])
+                         username=self.config.cfg['identifier']['theTVDB']['username'])
 
     def identify(self, disc: Disc) -> Disc:
         title: str = self.__get_nice_title__(disc.name)
@@ -45,12 +45,12 @@ class Identifier(object):
             if disc_number == 1:
                 start = 0
             elif disc_number == 2:
-                start = len(tvdb_episodes) - len(disc.titles)
+                start = len(tvdb_episodes) - len(disc.titles) - 1
 
             end = start + len(disc.titles)
 
             for i in range(start, end):
-                title: Title = disc.ordered_titles[i]
+                title: Title = disc.ordered_titles[i - start]
                 episode: Episode = episodes.get(i + 1)
 
                 title.name = episode.name

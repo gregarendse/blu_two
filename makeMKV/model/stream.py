@@ -17,7 +17,7 @@ class Stream(object):
     tree_info: str
     panel_title: ItemInfo
     order_weight: int
-    mkv_flags: int
+    mkv_flags: str
     mkv_flags_text: str
     output_conversion_type: str
 
@@ -32,7 +32,7 @@ class Stream(object):
                  tree_info: str = None,
                  panel_title: ItemInfo = None,
                  order_weight: int = None,
-                 mkv_flags: int = None,
+                 mkv_flags: str = None,
                  mkv_flags_text: str = None,
                  output_conversion_type: str = None):
         self.output_conversion_type: str = output_conversion_type
@@ -105,7 +105,7 @@ class VideoStream(Stream):
                  tree_info: str = None,
                  panel_title: str = None,
                  order_weight: int = None,
-                 mkv_flags: int = None,
+                 mkv_flags: str = None,
                  mkv_flags_text: str = None,
                  output_conversion_type: str = None,
                  video_size: Resolution = None,
@@ -142,6 +142,9 @@ class VideoStream(Stream):
         else:
             super().setAttribute(attributeId, code, value)
 
+    def compare(self, other):
+        return self.video_size.compare(other.video_size)
+
 
 class AudioStream(Stream):
     name: str
@@ -163,7 +166,7 @@ class AudioStream(Stream):
                  tree_info: str = None,
                  panel_title: str = None,
                  order_weight: int = None,
-                 mkv_flags: int = None,
+                 mkv_flags: str = None,
                  mkv_flags_text: str = None,
                  name: str = None,
                  language_code: str = None,
@@ -231,7 +234,7 @@ class SubtitleStream(Stream):
                  tree_info: str = None,
                  panel_title: str = None,
                  order_weight: int = None,
-                 mkv_flags: int = None,
+                 mkv_flags: str = None,
                  mkv_flags_text: str = None,
                  output_conversion_type: str = None,
                  language_code: str = None,

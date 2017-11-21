@@ -32,7 +32,7 @@ class HandbrakeCLI(object):
         self.defaultSettings = HandbrakeSettins(
             preset=self.config.cfg['handbrake']['preset'],
             frameRate=self.config.cfg['handbrake']['frame_rate'],
-            quality=self.config.cfg['handbrake']['quality'],
+            quality=self.config.cfg['handbrake']['quality']['default'],
             encoder=self.config.cfg['handbrake']['encoder']['encoder'],
             encoderPreset=self.config.cfg['handbrake']['encoder']['preset'],
             encoderTune=self.config.cfg['handbrake']['encoder']['tune'],
@@ -45,8 +45,17 @@ class HandbrakeCLI(object):
         if kwargs.get('frame_rate') is not None:
             settings.frameRate = kwargs.get('frame_rate')
 
+        if kwargs.get('quality') is not None:
+            settings.quality = kwargs.get('quality')
+
+        if kwargs.get('height') is not None:
+            settings.options = "{} --height {}".format(settings.options, kwargs.get('height'))
+
+        if kwargs.get('width') is not None:
+            settings.options = "{} --width {}".format(settings.options, kwargs.get('width'))
+
         response: Response = self.commander.call(
-            '{executable} --verbose --input="{input}" --output="{output}" --preset="{preset}" --rate={frameRate} --quality={quality} --encoder={encoder} --encoder-preset={encoderPreset} --encoder-tune={encoderTune} {options}'
+            '{executable} --input="{input}" --output="{output}" --preset="{preset}" --rate={frameRate} --quality={quality} --encoder={encoder} --encoder-preset={encoderPreset} --encoder-tune={encoderTune} {options}'
                 .format(executable=self.executable,
                         input=input_file,
                         output=output_file,

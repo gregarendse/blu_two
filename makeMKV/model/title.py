@@ -164,7 +164,11 @@ SINFO:0,0,42,5088,"( Lossless conversion )"
         if type(self) != type(other):
             raise Exception('Type mismatch, self: {self}, other: {other}'
                             .format(self=self, other=other))
-        # Assuming the title with the most streams is the title we want
+
+        score: int = 0
+
+        score += self.getVideoStream().video_size.compare(other.getVideoStream().video_size)
+
         if len(self.streams) > len(other.streams):
             return 1
         else:
@@ -174,3 +178,9 @@ SINFO:0,0,42,5088,"( Lossless conversion )"
         for key, value in self.streams.items():
             if type(value) is VideoStream:
                 return value
+
+    def getAudioStream(self) -> AudioStream:
+        for key, value in self.streams.items():
+            if (type(value) is AudioStream):
+                if value.mkv_flags == 'd':
+                    return value
