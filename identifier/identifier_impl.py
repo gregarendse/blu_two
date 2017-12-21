@@ -1,10 +1,15 @@
-import re
+import os
+import platform
+import time
 from typing import Dict
+
+import xmltodict
 
 from blu import Config
 from identifier import TVDB
 from identifier.model.series_search_data import SeriesSearchData
 from identifier.model.title import Episode
+from identifier.tmdb import TMDb
 from makeMKV.model.disc import Disc
 from makeMKV.model.title import Title
 
@@ -16,13 +21,14 @@ class Identifier(object):
         self.tvdb = TVDB(apikey=self.config.cfg['identifier']['theTVDB']['api_key'],
                          userkey=self.config.cfg['identifier']['theTVDB']['user_key'],
                          username=self.config.cfg['identifier']['theTVDB']['username'])
+        self.tmdb = TMDb()
 
     def identify(self, disc: Disc) -> Disc:
-        title: str = self.__get_nice_title__(disc.name)
+        title: str = disc.get_nice_title()
 
-        if self.__is_series__(disc.name):
-            disc_number: int = self._get_disc_number(disc.name)
-            season: int = self._get_season_number(disc.name)
+        if disc.is_series():
+            disc_number: int = disc.get_disc_number()
+            season: int = disc.get_season_number()
 
             series: SeriesSearchData = self.tvdb.search(title)[0]
             tvdb_episodes = self.tvdb.getEpisode(series.id, season)
@@ -57,38 +63,46 @@ class Identifier(object):
                 title.episode = episode.episode
                 title.season = episode.season
                 title.series = series.seriesName
+        else:
+            search_result = self.tmdb.movie_search(disc.name.replace('_', ' '))
+
+            if search_result.page.total_results == 1:
+                # disc.year = self.__get_year__('{location}/BDMV/META/DL/bdmt_eng.xml'.format(location=disc.location))
+                disc.year = search_result.results[0].get_year()
+                # disc.name = self.__get_name__('{location}/BDMV/META/DL/bdmt_eng.xml'.format(location=disc.location))
+                disc.name = search_result.results[0].title
 
             return disc
 
-    def __get_nice_title__(self, disc_title) -> str:
-        regex = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))|(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
-        working = regex.sub("", disc_title)  # Remove Season and disc
-        working = re.sub(r'_', ' ', working)  # Replace '_' with spaces
-        return working.strip()  # Remove trailing/leading spaces
+    def __get_year__(self, path_to_file: str) -> int:
+        """
+        https://stackoverflow.com/questions/237079/how-to-get-file-creation-modification-date-times-in-python
 
-    def __is_series__(self, disc_title) -> bool:
-        search = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))|(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
-        if search.search(disc_title):
-            return True
+        Try to get the date that a file was created, falling back to when it was
+        last modified if that isn't possible.
+        See http://stackoverflow.com/a/39501288/1709587 for explanation.
+        """
+        seconds: int = 0
+        if platform.system() == 'Windows':
+            seconds = int(os.path.getctime(path_to_file))
         else:
-            return False
+            stat = os.stat(path_to_file)
+            try:
+                seconds = int(stat.st_birthtime)
+            except AttributeError:
+                # We're probably on Linux. No easy way to get creation dates here,
+                # so we'll settle for when its content was last modified.
+                seconds = int(stat.st_mtime)
 
-    def _get_disc_number(self, disc_title) -> int:
-        search = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))', re.IGNORECASE)
-        s = search.search(disc_title)
+        return int(time.strftime('%Y', time.localtime(seconds)))
 
-        counter = 0
-        while s.group(len(s.groups()) - counter) is None:
-            counter = counter + 1
+    def __get_name__(self, path_to_file: str) -> str:
+        with open(path_to_file, 'r') as file:
+            content = file.read()
 
-        return int(s.group(len(s.groups()) - counter))
+        try:
+            xml = xmltodict.parse(content, encoding='UTF-8')
+        except:
+            xml = xmltodict.parse(content, encoding='ISO-8859-1')
 
-    def _get_season_number(self, disc_title) -> int:
-        search = re.compile(r'(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
-        s = search.search(disc_title)
-
-        counter = 0
-        while s.group(len(s.groups()) - counter) is None:
-            counter = counter + 1
-
-        return int(s.group(len(s.groups()) - counter))
+        return xml['disclib']['di:discinfo']['di:title']['di:name']

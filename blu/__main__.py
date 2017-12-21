@@ -1,7 +1,6 @@
 import logging
 import logging.config
 import os
-import socket
 from typing import List
 
 import click
@@ -15,6 +14,7 @@ from makeMKV.makeMKV import MakeMKV
 from makeMKV.model.drive import Drive
 from makeMKV.model.enum.disc_type import DiscType
 from makeMKV.model.stream import VideoStream
+from makeMKV.model.title import Title
 
 logger = logging.getLogger(__name__)
 
@@ -49,44 +49,88 @@ def blu(rip: bool, config_location: str, log_config: str, re_run: bool = False):
             drive = makeMKV.scan_disc(drive)
             identifier.identify(drive.disc)
 
-            quality: int = int(config.cfg['handbrake']['quality']['default'])
-            if drive.disc.type == DiscType.BRAY_TYPE_DISK:
-                quality = int(config.cfg['handbrake']['quality']['bluray'])
-            elif drive.disc.type == DiscType.DVD_TYPE_DISK:
-                quality = int(config.cfg['handbrake']['quality']['dvd'])
+            if drive.disc.is_series():
+                ripSeries(compressor, config, drive, makeMKV, re_run)
+            else:
+                ripMovie(compressor, config, drive, makeMKV, re_run)
 
-            for key, value in drive.disc.titles.items():
-                video_stream: VideoStream = value.getVideoStream()
-                container: str = str(config.cfg['general']['container'])
-                file_name: str = str(config.cfg['general']['filename_format'] \
-                                     .format(series=value.series,
-                                             season=value.season,
-                                             episode=value.episode,
-                                             name=value.name,
-                                             source=drive.disc.type.toString(),
-                                             resolution=video_stream.video_size.y)) + "." + container
-                raw_dir: str = str(config.cfg['general']['location']['raw'])
-                compress_dir: str = str(config.cfg['general']['location']['compressed'])
 
-                if not re_run:
-                    os.makedirs(compress_dir, exist_ok=True)
-                    os.makedirs(raw_dir, exist_ok=True)
+def ripMovie(compressor, config, drive, makeMKV, re_run):
+    value: Title = drive.disc.get_movie_title()
+    video_stream: VideoStream = value.getVideoStream()
+    container: str = str(config.cfg['general']['movies']['container'])
+    # str(config.cfg['general']['movies']['filename_format'] \
+    file_name: str = ('{title} ({year}) - {source} {resolution}p'
+        .format(title=drive.disc.get_nice_title(),
+                year=drive.disc.year,
+                source=drive.disc.type.toString(),
+                resolution=video_stream.video_size.y)) + "." + container
+    raw_dir: str = str(config.cfg['general']['movies']['location']['raw'])
+    compress_dir: str = str(config.cfg['general']['movies']['location']['compressed'])
 
-                output = os.path.join(compress_dir, file_name)
+    if not re_run:
+        os.makedirs(compress_dir, exist_ok=True)
+        os.makedirs(raw_dir, exist_ok=True)
 
-                raw_location = makeMKV.rip_disc(drive, raw_dir, value.id)
-                value.raw_location = os.path.join(raw_dir, file_name)
+    output = os.path.join(compress_dir, file_name)
 
-                if not re_run:
-                    os.replace(raw_location, value.raw_location)
+    raw_location = makeMKV.rip_disc(drive, raw_dir, value.id)
+    value.raw_location = os.path.join(raw_dir, file_name)
 
-                compressor.compressFile(input_file=value.raw_location,
-                                        output_file=output,
-                                        frame_rate=video_stream.frame_rate,
-                                        width=video_stream.video_size.x,
-                                        height=video_stream.video_size.y,
-                                        quality=quality)
-                value.output = output
+    if not re_run:
+        os.replace(raw_location, value.raw_location)
+
+    # compressor.compressFile(input_file=value.raw_location,
+    #                         output_file=output,
+    #                         frame_rate=video_stream.frame_rate,
+    #                         width=video_stream.video_size.x,
+    #                         height=video_stream.video_size.y,
+    #                         quality=getQuality(config, drive))
+    value.output = output
+
+
+def ripSeries(compressor, config, drive, makeMKV, re_run):
+    for key, value in drive.disc.titles.items():
+        video_stream: VideoStream = value.getVideoStream()
+        container: str = str(config.cfg['general']['series']['container'])
+        file_name: str = str(config.cfg['general']['series']['filename_format'] \
+                             .format(series=value.series,
+                                     season=value.season,
+                                     episode=value.episode,
+                                     name=value.name,
+                                     source=drive.disc.type.toString(),
+                                     resolution=video_stream.video_size.y)) + "." + container
+        raw_dir: str = str(config.cfg['general']['series']['location']['raw'])
+        compress_dir: str = str(config.cfg['general']['series']['location']['compressed'])
+
+        if not re_run:
+            os.makedirs(compress_dir, exist_ok=True)
+            os.makedirs(raw_dir, exist_ok=True)
+
+        output = os.path.join(compress_dir, file_name)
+
+        raw_location = makeMKV.rip_disc(drive, raw_dir, value.id)
+        value.raw_location = os.path.join(raw_dir, file_name)
+
+        if not re_run:
+            os.replace(raw_location, value.raw_location)
+
+        compressor.compressFile(input_file=value.raw_location,
+                                output_file=output,
+                                frame_rate=video_stream.frame_rate,
+                                width=video_stream.video_size.x,
+                                height=video_stream.video_size.y,
+                                quality=getQuality(config, drive))
+        value.output = output
+
+
+def getQuality(config, drive):
+    quality: int = int(config.cfg['handbrake']['quality']['default'])
+    if drive.disc.type == DiscType.BRAY_TYPE_DISK:
+        quality = int(config.cfg['handbrake']['quality']['bluray'])
+    elif drive.disc.type == DiscType.DVD_TYPE_DISK:
+        quality = int(config.cfg['handbrake']['quality']['dvd'])
+    return quality
 
 
 def setup_logging(

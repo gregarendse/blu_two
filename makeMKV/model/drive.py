@@ -23,6 +23,7 @@ class Drive(object):
     drive_name: Optional[str]
     disc_name: Optional[str]
     disc: Disc
+    location: str
 
     def __init__(self,
                  index: int = None,
@@ -30,10 +31,12 @@ class Drive(object):
                  flags: DiskMediaFlag = None,
                  drive_name: Optional[str] = None,
                  disc_name: Optional[str] = None,
-                 disc: Disc = None):
+                 disc: Disc = None,
+                 location: str = None):
         self.index = index
         self.visible = visible
         self.flags = flags
         self.drive_name = drive_name
         self.disc_name = disc_name
         self.disc = disc
+        self.location = location

@@ -1,9 +1,12 @@
+import logging
 from typing import Dict
 
 from makeMKV.model.enum.item_attribute_id import ItemAttributeId
 from makeMKV.model.enum.item_info import ItemInfo
 from makeMKV.model.enum.stream_type import StreamType
 from makeMKV.model.stream import Stream, VideoStream, SubtitleStream, AudioStream
+
+logger = logging.getLogger(__name__)
 
 
 class Title(object):
@@ -14,7 +17,7 @@ class Title(object):
     bytes: int
     source_file_name: str
     segments_count: int
-    segments_map: int
+    segments_map: str
     output_file_name: str
     metadata_language_code: str
     metadata_language_name: str
@@ -28,7 +31,7 @@ class Title(object):
     def __init__(self,
                  id: int,
                  name=None,
-                 chapters=None,
+                 chapters=0,
                  duration=None,
                  bytes=None,
                  source_file_name=None,
@@ -82,38 +85,44 @@ class Title(object):
         :return:
         """
 
-        if ItemAttributeId.Name == attributeId:
-            self.name = str(value)
-        elif ItemAttributeId.ChapterCount == attributeId:
-            self.chapters = int(value)
-        elif ItemAttributeId.Duration == attributeId:
-            (hrs, min, sec) = str(value).split(':', 3)
-            self.duration = (int(hrs) * 3600) + (int(min) * 60) + int(sec)
-        elif ItemAttributeId.DiskSize == attributeId:
-            pass
-        elif ItemAttributeId.DiskSizeBytes == attributeId:
-            self.bytes = int(value)
-        elif ItemAttributeId.SourceFileName == attributeId:
-            self.source_file_name = str(value)
-        elif ItemAttributeId.SegmentsCount == attributeId:
-            self.segments_count = int(value)
-        elif ItemAttributeId.SegmentsMap == attributeId:
-            self.segments_map = int(value)
-        elif ItemAttributeId.OutputFileName == attributeId:
-            self.output_file_name = str(value)
-        elif ItemAttributeId.MetadataLanguageCode == attributeId:
-            self.metadata_language_code = str(value)
-        elif ItemAttributeId.MetadataLanguageName == attributeId:
-            self.metadata_language_name = str(value)
-        elif ItemAttributeId.TreeInfo == attributeId:
-            self.tree_info = str(value)
-        elif ItemAttributeId.PanelTitle == attributeId:
-            self.panel_title = ItemInfo(int(code))
-        elif ItemAttributeId.OrderWeight == attributeId:
-            self.order_weight = int(value)
-        else:
-            raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
-                            .format(attributeId=attributeId, code=code, value=value))
+        try:
+            if ItemAttributeId.Name == attributeId:
+                self.name = str(value)
+            elif ItemAttributeId.ChapterCount == attributeId:
+                self.chapters = int(value)
+            elif ItemAttributeId.Duration == attributeId:
+                (hrs, min, sec) = str(value).split(':', 3)
+                self.duration = (int(hrs) * 3600) + (int(min) * 60) + int(sec)
+            elif ItemAttributeId.DiskSize == attributeId:
+                pass
+            elif ItemAttributeId.DiskSizeBytes == attributeId:
+                self.bytes = int(value)
+            elif ItemAttributeId.SourceFileName == attributeId:
+                self.source_file_name = str(value)
+            elif ItemAttributeId.SegmentsCount == attributeId:
+                self.segments_count = int(value)
+            elif ItemAttributeId.SegmentsMap == attributeId:
+                self.segments_map = str(value)
+            elif ItemAttributeId.OutputFileName == attributeId:
+                self.output_file_name = str(value)
+            elif ItemAttributeId.MetadataLanguageCode == attributeId:
+                self.metadata_language_code = str(value)
+            elif ItemAttributeId.MetadataLanguageName == attributeId:
+                self.metadata_language_name = str(value)
+            elif ItemAttributeId.TreeInfo == attributeId:
+                self.tree_info = str(value)
+            elif ItemAttributeId.PanelTitle == attributeId:
+                self.panel_title = ItemInfo(int(code))
+            elif ItemAttributeId.OrderWeight == attributeId:
+                self.order_weight = int(value)
+
+            else:
+                raise AttributeError('Unknown attribute: {attributeId}, code: {code}, value: {value}'
+                                     .format(attributeId=attributeId, code=code, value=value))
+        except AttributeError:
+            logging.warning(
+                'Failed to set attribute - selfId: {id}, attributeId: {attributeId}, code: {code}, value: {value}'
+                    .format(id=self.id, attributeId=attributeId, code=code, value=value))
 
     def setStreamAttribute(self, streamId: int, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """

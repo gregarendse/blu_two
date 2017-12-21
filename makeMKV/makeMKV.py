@@ -54,6 +54,7 @@ class MakeMKV(object):
             raise Exception(response.std_err)
 
         drive.disc = self.__parse_scan_disc_output__(response.std_out)
+        drive.disc.location = drive.location
 
         return drive
 
@@ -77,14 +78,15 @@ class MakeMKV(object):
                 pass
             elif Type.DRV == line_type:
                 if len(line_parts) < 6:
-                    raise Exception('Expected 6 parts to a \"DRV\" line!', line_parts)
+                    raise Exception('Expected 7 parts to a \"DRV\" line!', line_parts)
 
                 drive: Drive = Drive(
                     index=int(line_parts[0]),
                     visible=DriveState(int(line_parts[1])),
                     flags=DiskMediaFlag(int(line_parts[3])),
                     drive_name=line_parts[4].strip('\"'),
-                    disc_name=line_parts[5].strip('\"')
+                    disc_name=line_parts[5].strip('\"'),
+                    location=line_parts[6].strip('\"')
                 )
 
                 if drive.visible:
@@ -164,13 +166,9 @@ class MakeMKV(object):
         disc.titles = title_map
         disc.ordered_titles = []
 
-        i: int = 0
-        while (len(title_map) > len(disc.ordered_titles)):
-            title = title_map.get(i)
+        ordered_keys = sorted(title_map.keys())
 
-            if title is not None:
-                disc.ordered_titles.append(title)
-
-            i += 1
+        for key in ordered_keys:
+            disc.ordered_titles.append(title_map.get(key))
 
         return disc

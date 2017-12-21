@@ -78,16 +78,21 @@ class Stream(object):
             self.mkv_flags_text = value
         elif ItemAttributeId.OutputConversionType == attributeId:
             self.output_conversion_type = value
+        elif ItemAttributeId.OutputFormat == attributeId:
+            pass
+        elif ItemAttributeId.OutputFormatDescription == attributeId:
+            pass
         else:
             raise Exception('Unknown attribute: {attributeId}, code: {code}, value: {value}'
                             .format(attributeId=attributeId, code=code, value=value))
 
-    def compare(self, other) -> int:
-        if type(other) != type(self):
-            raise Exception('Type mismatch, self: {self}, other: {other}'
-                            .format(self=self, other=other))
 
-        return 0
+def compare(self, other) -> int:
+    if type(other) != type(self):
+        raise Exception('Type mismatch, self: {self}, other: {other}'
+                        .format(self=self, other=other))
+
+    return 0
 
 
 class VideoStream(Stream):
@@ -139,6 +144,8 @@ class VideoStream(Stream):
             self.frame_rate = float(
                 str(value).split(' ')[0]
             )
+        elif ItemAttributeId.BitRate == attributeId:
+            pass
         else:
             super().setAttribute(attributeId, code, value)
 
@@ -153,6 +160,7 @@ class AudioStream(Stream):
     bit_rate: int
     audio_channel_count: int
     audio_sample_rate: int
+    audio_sample_size: int
     volume_name: str
     audio_channel_layout_name: str
 
@@ -174,6 +182,7 @@ class AudioStream(Stream):
                  bit_rate: int = None,
                  audio_channel_count: int = None,
                  audio_sample_rate: int = None,
+                 audio_sample_size: int = None,
                  volume_name: str = None,
                  audio_channel_layout_name: str = None,
                  output_conversion_type: str = None):
@@ -196,6 +205,7 @@ class AudioStream(Stream):
         self.bit_rate: int = bit_rate
         self.audio_channel_count: int = audio_channel_count
         self.audio_sample_rate: int = audio_sample_rate
+        self.audio_sample_size: int = audio_sample_size
         self.volume_name: str = volume_name
         self.audio_channel_layout_name: str = audio_channel_layout_name
 
@@ -207,11 +217,19 @@ class AudioStream(Stream):
         elif ItemAttributeId.LangName == attributeId:
             self.language_name = value
         elif ItemAttributeId.BitRate == attributeId:
-            self.bit_rate = int(value.split(' ')[0])
+            parts = value.split(' ')
+            if parts[1] == 'Mb/s':
+                self.bit_rate = int(float(parts[0]) * 1000)
+            elif parts[1] == 'Kb/s':
+                self.bit_rate = int(parts[0])
+            else:
+                raise Exception('Unhandled magnitude: ', parts[1])
         elif ItemAttributeId.AudioChannelsCount == attributeId:
             self.audio_channel_count = int(value)
         elif ItemAttributeId.AudioSampleRate == attributeId:
             self.audio_sample_rate = int(value)
+        elif ItemAttributeId.AudioSampleSize == attributeId:
+            self.audio_sample_size = int(value)
         elif ItemAttributeId.VolumeName == attributeId:
             self.volume_name = value
         elif ItemAttributeId.AudioChannelLayoutName == attributeId:

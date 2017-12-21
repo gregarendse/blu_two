@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List, Optional
 
 from makeMKV.model.enum.disc_type import DiscType
@@ -17,6 +18,8 @@ class Disc(object):
     order_weight: int
     titles: Dict[int, Title]
     ordered_titles: List[Title]
+    year: int
+    location: str
 
     def __init__(self,
                  type=None,
@@ -26,9 +29,10 @@ class Disc(object):
                  tree_info=None,
                  panel_title=None,
                  volume_name=None,
-                 order_weight=None):
-        self.type = type
-        self.name = name
+                 order_weight=None,
+                 location=None):
+        self.type: DiscType = type
+        self.name: str = str(name)
         self.meta_language_code = meta_language_code
         self.meta_language_name = meta_language_name
         self.tree_info = tree_info
@@ -37,6 +41,8 @@ class Disc(object):
         self.order_weight = order_weight
         self.titles = {}
         self.ordered_titles: List[Title] = []
+        self.year = None
+        self.location = None
 
     def setAttribute(self, attributeId: ItemAttributeId, code: int, value: str) -> None:
         """
@@ -100,3 +106,47 @@ class Disc(object):
         for key, title in self.titles.items():
             if title.id == id:
                 return title
+
+    def get_nice_title(self) -> str:
+        regex = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))|(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
+        working = regex.sub("", self.name)  # Remove Season and disc
+        working = re.sub(r'_', ' ', working)  # Replace '_' with spaces
+        working = "".join(x for x in working if x.isalnum() or x in " _-")
+
+        return working.strip()  # Remove trailing/leading spaces
+
+    def is_series(self) -> bool:
+        search = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))|(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
+        if search.search(self.name):
+            return True
+        else:
+            return False
+
+    def get_disc_number(self) -> int:
+        search = re.compile(r'(DISC[_ ]?(\d+))|(D[_ ]?(\d+))', re.IGNORECASE)
+        s = search.search(self.name)
+
+        counter = 0
+        while s.group(len(s.groups()) - counter) is None:
+            counter = counter + 1
+
+        return int(s.group(len(s.groups()) - counter))
+
+    def get_season_number(self) -> int:
+        search = re.compile(r'(SEASON[_ ]?(\d+))|(S[_ ]?(\d+))', re.IGNORECASE)
+        s = search.search(self.name)
+
+        counter = 0
+        while s.group(len(s.groups()) - counter) is None:
+            counter = counter + 1
+
+        return int(s.group(len(s.groups()) - counter))
+
+    def get_movie_title(self) -> Title:
+        # return self.ordered_titles[0]
+
+        title: Title = self.ordered_titles[0]
+        for item in self.ordered_titles:
+            if item.chapters > title.chapters:
+                title = item
+        return title
