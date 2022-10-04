@@ -12,7 +12,7 @@ mccabe==0.6.1
 py-flags==1.1.2
 pylint==1.7.4
 PyYAML==3.12
-requests==2.18.4
+requests==2.20.0
 six==1.11.0
 urllib3==1.26.5
 wrapt==1.10.11
